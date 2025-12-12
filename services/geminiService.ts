@@ -1,10 +1,38 @@
 import { GoogleGenAI } from "@google/genai";
 import { GeneratedImage } from "../types";
+import { getApiKey } from "./storageService";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Helper to initialize the client dynamically
+const getClient = (customKey?: string) => {
+  // Prioritize custom key (for testing), then local storage, then env var
+  const apiKey = customKey || getApiKey() || process.env.API_KEY;
+  
+  if (!apiKey) {
+    throw new Error("API Key가 설정되지 않았습니다. 우측 상단 설정 버튼을 눌러 키를 등록해주세요.");
+  }
+  
+  return new GoogleGenAI({ apiKey });
+};
+
+export const testConnection = async (apiKey: string): Promise<boolean> => {
+  try {
+    const ai = getClient(apiKey);
+    // Lightweight call to verify credentials
+    await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: 'Ping',
+    });
+    return true;
+  } catch (error) {
+    console.error("Connection Test Failed:", error);
+    return false;
+  }
+};
 
 export const generateWallpapers = async (prompt: string): Promise<GeneratedImage[]> => {
   try {
+    const ai = getClient();
+    
     // Enhance prompt for wallpaper quality
     const enhancedPrompt = `${prompt}, high quality phone wallpaper, vertical 9:16 aspect ratio, 8k resolution, aesthetic, masterpiece, photorealistic, no text`;
 
@@ -42,7 +70,7 @@ export const generateWallpapers = async (prompt: string): Promise<GeneratedImage
     const validImages = results.filter((img): img is GeneratedImage => img !== null);
 
     if (validImages.length === 0) {
-      throw new Error("이미지를 생성하지 못했습니다. (모델 응답 없음)");
+      throw new Error("이미지를 생성하지 못했습니다. API Key를 확인하거나 잠시 후 다시 시도해주세요.");
     }
 
     return validImages;

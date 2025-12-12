@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { generateWallpapers } from './services/geminiService';
 import { GeneratedImage } from './types';
 import ImageViewer from './components/ImageViewer';
-import { Sparkles, Image as ImageIcon, Search, Loader2 } from 'lucide-react';
+import ApiKeySettings from './components/ApiKeySettings';
+import { Sparkles, Image as ImageIcon, Search, Loader2, Settings } from 'lucide-react';
 
 const App: React.FC = () => {
   const [prompt, setPrompt] = useState<string>('');
@@ -10,16 +11,17 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState<boolean>(false);
 
   // Prevent scrolling when modal is open
   useEffect(() => {
-    if (selectedImage) {
+    if (selectedImage || showSettings) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
     }
     return () => { document.body.style.overflow = 'unset'; };
-  }, [selectedImage]);
+  }, [selectedImage, showSettings]);
 
   const handleGenerate = async (searchPrompt: string = prompt) => {
     if (!searchPrompt.trim()) return;
@@ -40,7 +42,7 @@ const App: React.FC = () => {
         setSelectedImage(null);
       }
     } catch (err: any) {
-      setError("이미지를 생성하는 도중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      setError(err.message || "이미지를 생성하는 도중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
@@ -75,6 +77,13 @@ const App: React.FC = () => {
             AI 배경화면
           </h1>
         </div>
+        <button 
+          onClick={() => setShowSettings(true)}
+          className="p-2 text-neutral-400 hover:text-white transition-colors"
+          aria-label="설정"
+        >
+          <Settings size={20} />
+        </button>
       </header>
 
       {/* Main Content Area */}
@@ -123,7 +132,7 @@ const App: React.FC = () => {
 
         {/* Error State */}
         {error && (
-          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-center text-sm my-8">
+          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-center text-sm my-8 break-keep">
             {error}
           </div>
         )}
@@ -174,6 +183,11 @@ const App: React.FC = () => {
           </form>
         </div>
       </div>
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <ApiKeySettings onClose={() => setShowSettings(false)} />
+      )}
 
       {/* Full Screen Viewer */}
       <ImageViewer 
