@@ -1,0 +1,5 @@
+{
+  "name": "WallGen AI (Korean)",
+  "description": "A mobile-first AI wallpaper generator creating 9:16 backgrounds based on mood prompts.",
+  "requestFramePermissions": []
+}
